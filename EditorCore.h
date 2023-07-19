@@ -562,7 +562,6 @@ private:
   void insertText(LineNo line, Index column, const String& text);
   void removeText(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd);
 
-  Index* getLineIndex(LineNo id);
   Position getPiecePosition(LineNo id, Index column);
   //insert a linebreak
   void insertLineBreak(LineNo line, Index column);
@@ -573,7 +572,6 @@ private:
   void insertInLine(LineNo line, Index column, const Character* chs, Length length);
   void insertInLine(const Position& position, const Character* chs, Length length);
   void removeInLine(LineNo line, Index columnStart, Index columnEnd);
-  inline Piece& getPiece(Index id);
   GapBuffer<Index> gapBuffer;
   PieceTable* pieceTable = nullptr;
   CommandExecutor executor;

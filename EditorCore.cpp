@@ -427,7 +427,7 @@ EditorCore::~EditorCore(){
 }
 
 void EditorCore::removeInLine(LineNo line, Index columnStart, Index columnEnd){
-  Index headIndex = *(getLineIndex(line));
+  Index headIndex = gapBuffer[line];
   Index rover = headIndex;
   Length sum = 0;
 
@@ -506,7 +506,7 @@ void EditorCore::insertInLine(const Position& position, const Character* chs, Le
   textBuffer.addCharacters(chs, length);
   Index textEnd = textBuffer.getEnd();
   
-  Index headIndex = *(getLineIndex(position.line));
+  Index headIndex = gapBuffer[position.line];
   Index rover = headIndex;
   Length sum = 0;
 
@@ -559,44 +559,42 @@ void EditorCore::insertLineBreak(LineNo line, Index column){
   Position pos = getPiecePosition(line,column);
 
   Index ind = executor.insertEmptyLine(line + 1);
+
+  Index textStart = textBuffer.getEnd();
+  textBuffer.addCharacter(Character('\n'));
+  Index textEnd = textBuffer.getEnd();
+
   //has linebreak line
   if(GET(pos.headIndex).getTextEnd()-GET(pos.headIndex).getTextStart() !=0){
-    Index textStart = textBuffer.getEnd();
-    textBuffer.addCharacter(Character('\n'));
-    Index textEnd = textBuffer.getEnd();
     executor.setTextStartEnd(gapBuffer[ind],textStart,textEnd);
   }else{
     //give old line a linebreak
-    Index textStart = textBuffer.getEnd();
-    textBuffer.addCharacter(Character('\n'));
-    Index textEnd = textBuffer.getEnd(); 
     executor.setTextStartEnd(pos.headIndex, textStart, textEnd);
   }
   if(pos.textPosition == GET(pos.pieceIndex).getTextEnd()){
     if(GET(pos.pieceIndex).getNext() != pos.headIndex){
-      executor.setPieceNext(gapBuffer[ind], GET(pos.pieceIndex).getNext());
+      executor.setPiecePrevNext(gapBuffer[ind],pieceTable->get(pos.headIndex).getPrev(), GET(pos.pieceIndex).getNext());
       executor.setPiecePre(GET(pos.pieceIndex).getNext(), gapBuffer[ind]);
-      executor.setPiecePre(gapBuffer[ind], pieceTable->get(pos.headIndex).getPrev());
       executor.setPieceNext(pieceTable->prevIndex(pos.headIndex),gapBuffer[ind]);
       executor.setPiecePre(pos.headIndex, pos.pieceIndex);
       executor.setPieceNext(pos.pieceIndex, pos.headIndex);
     }
   }else if(pos.textPosition < GET(pos.pieceIndex).getTextEnd()){
     Index left = executor.createPiece();
-    executor.setTextStartEnd(left,GET(pos.pieceIndex).getTextStart(),pos.textPosition);
-    Index right = executor.createPiece();
-    executor.setTextStartEnd(right, pos.textPosition,GET(pos.pieceIndex).getTextEnd());
-    executor.setPieceNext(pieceTable->prevIndex(pos.pieceIndex),left);
-    executor.setPiecePrevNext(left, pieceTable->prevIndex(pos.pieceIndex),pos.headIndex);
-    executor.setPiecePre(pos.headIndex, left);
+    executor.setPieceInfo(left,pieceTable->prevIndex(pos.pieceIndex),
+                          pos.headIndex,
+                          GET(pos.pieceIndex).getTextStart(),
+                          pos.textPosition);
     
+    Index right = executor.createPiece();
+    executor.setPieceInfo(right,gapBuffer[ind],GET(pos.pieceIndex).getNext(),
+                          pos.textPosition,GET(pos.pieceIndex).getTextEnd());
 
-    executor.setPieceNext(gapBuffer[ind], right);
-    executor.setPiecePrevNext(right, gapBuffer[ind],GET(pos.pieceIndex).getNext());
+    executor.setPieceNext(pieceTable->prevIndex(pos.pieceIndex),left);
+    executor.setPiecePre(pos.headIndex, left);
+    executor.setPiecePrevNext(gapBuffer[ind],pieceTable->prevIndex(pos.headIndex),right);
     executor.setPiecePre(GET(pos.pieceIndex).getNext(), right);
-    executor.setPiecePre(gapBuffer[ind], pieceTable->prevIndex(pos.headIndex));
     executor.setPieceNext(pieceTable->prevIndex(pos.headIndex), gapBuffer[ind]);
-
     executor.removePiece(pos.pieceIndex);
   }
 }
@@ -780,15 +778,6 @@ Position EditorCore::getPiecePosition(LineNo id, Index column){
     l += rover->getTextEnd() - rover->getTextStart();
   }while(head != rover);
   return pos;
-}
-
-Index*  EditorCore::getLineIndex(LineNo id){
-  Index* ptr = gapBuffer.get(id);
-  return ptr;
-}
-
-Piece& EditorCore::getPiece(Index id){
-  return pieceTable->get(id);
 }
 
 #include <iostream>
