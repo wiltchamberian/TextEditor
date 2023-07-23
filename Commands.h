@@ -278,6 +278,32 @@ public:
   Index line;
 };
 
+class RemovePieceSequenceUndoCmd{
+public:
+  RemovePieceSequenceUndoCmd(){
+    head.type = CmdType::RemovePieceSequenceUndo;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  Index pieceStart;
+  Index pieceLast;
+  Index piecePreStartTextEnd;
+  Index pieceSucLastTextStart;
+};
+
+class RemovePieceSequenceRedoCmd{
+public:
+  RemovePieceSequenceRedoCmd(){
+    head.type = CmdType::RemovePieceSequenceRedo;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  Index pieceStart;
+  Index pieceLast;
+  Index piecePreStartTextEnd;
+  Index pieceSucLastTextStart;
+};
+
 ///////////////////////////////
 
 #endif

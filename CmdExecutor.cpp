@@ -299,6 +299,31 @@ void CommandExecutor::insertBreakBetweenPieceUndo(const InsertBreakBetweenPieceU
   gapBuffer->remove(newHead);
 }
 
+void CommandExecutor::removePieceSequenceRedo(const RemovePieceSequenceRedoCmd& cmd){
+  RemovePieceSequenceUndoCmd* newCmd = (RemovePieceSequenceUndoCmd*)undoBuffer.addCmd(CmdType::RemovePieceSequenceUndo,sizeof(RemovePieceSequenceUndoCmd));
+  newCmd->pieceStart = cmd.pieceStart;
+  newCmd->pieceLast = cmd.pieceLast;
+  newCmd->piecePreStartTextEnd = GET(GET(cmd.pieceStart).getPrev()).getTextEnd();
+  newCmd->pieceSucLastTextStart = GET(GET(cmd.pieceLast).getNext()).getTextStart();
+  
+  pieceTable->setTextEnd(GET(cmd.pieceStart).getPrev(),cmd.piecePreStartTextEnd);
+  pieceTable->setTextStart(GET(cmd.pieceLast).getNext(), cmd.pieceSucLastTextStart);
+  pieceTable->unLink(cmd.pieceStart, cmd.pieceLast);
+}
+
+void CommandExecutor::removePieceSequenceUndo(const RemovePieceSequenceUndoCmd& cmd){
+  RemovePieceSequenceRedoCmd* newCmd = (RemovePieceSequenceRedoCmd*)redoBuffer.addCmd(CmdType::RemovePieceSequenceRedo,sizeof(RemovePieceSequenceRedoCmd));
+  newCmd->pieceStart = cmd.pieceStart;
+  newCmd->pieceLast = cmd.pieceLast;
+  newCmd->piecePreStartTextEnd = GET(GET(cmd.pieceStart).getPrev()).getTextEnd();
+  newCmd->pieceSucLastTextStart = GET(GET(cmd.pieceLast).getNext()).getTextStart();
+
+  pieceTable->setTextEnd(GET(cmd.pieceStart).getPrev(),cmd.piecePreStartTextEnd);
+  pieceTable->setTextStart(GET(cmd.pieceLast).getNext(), cmd.pieceSucLastTextStart);
+  pieceTable->linkTogether(GET(cmd.pieceStart).getPrev(), cmd.pieceStart);
+  pieceTable->linkTogether(cmd.pieceLast, GET(cmd.pieceLast).getNext());
+}
+
 void CommandExecutor::act(CmdBuffer& current, CmdBuffer& target){
   EndCmd run;
   target.addCmd(&run);
@@ -505,6 +530,16 @@ void CommandExecutor::act(CmdBuffer& current, CmdBuffer& target){
       case CmdType::InsertBreakBetweenPieceUndo:{
         const InsertBreakBetweenPieceUndoCmd* cmd = (InsertBreakBetweenPieceUndoCmd*)head;
         insertBreakBetweenPieceUndo(*cmd);
+      }
+      break;
+      case CmdType::RemovePieceSequenceRedo:{
+        const RemovePieceSequenceRedoCmd* cmd = (RemovePieceSequenceRedoCmd*)head;
+        removePieceSequenceRedo(*cmd);
+      }
+      break;
+      case CmdType::RemovePieceSequenceUndo:{
+        const RemovePieceSequenceUndoCmd* cmd = (RemovePieceSequenceUndoCmd*)head;
+        removePieceSequenceUndo(*cmd);
       }
       break;
       default:

@@ -155,6 +155,11 @@ public:
     vec[vec[node].pre].next = vec[node].next;
     vec[vec[node].next].pre = vec[node].pre;
   }
+  //unlink a sequence in the list
+  void unLink(Index nodeStart, Index nodeLast){
+    vec[vec[nodeStart].pre].next = vec[nodeLast].next;
+    vec[vec[nodeLast].next].pre  = vec[nodeStart].pre;
+  }
   void erase(Index node){
     unLink(node);
     SparseSet<Piece>::remove(node);

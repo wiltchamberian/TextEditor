@@ -61,6 +61,8 @@ public:
   void insertBreakInPieceUndo(const InsertBreakInPieceUndoCmd& cmd);
   void insertBreakBetweenPieceRedo(const InsertBreakBetweenPieceRedoCmd& cmd);
   void insertBreakBetweenPieceUndo(const InsertBreakBetweenPieceUndoCmd& cmd);
+  void removePieceSequenceRedo(const RemovePieceSequenceRedoCmd& cmd);
+  void removePieceSequenceUndo(const RemovePieceSequenceUndoCmd& cmd);
 private:
   void act(CmdBuffer& current, CmdBuffer& target);
   void executeTextStartChangeCommand(const TextStartChangeCmd& cmd);

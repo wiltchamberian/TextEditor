@@ -47,6 +47,8 @@ enum class CmdType : uint16_t{
   InsertBreakInPieceUndo,
   InsertBreakBetweenPieceRedo,
   InsertBreakBetweenPieceUndo,
+  RemovePieceSequenceRedo,
+  RemovePieceSequenceUndo,
 
   //after these are simple cmd, which may not perserve the underlying structure
   //but logically structure is peserved.

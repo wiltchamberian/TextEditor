@@ -18,64 +18,50 @@ EditorCore::~EditorCore(){
 }
 
 void EditorCore::removeInLine(LineNo line, Index columnStart, Index columnEnd){
-  Index headIndex = gapBuffer[line];
-  Index rover = headIndex;
-  Length sum = 0;
-
-  Index removeFirstIndex = 0;
-  Index removeLastIndex = 0;
-  size_t count_first = 0;
-  size_t count_last = 0;
-  size_t count = 0;
-  size_t ok = 0;
-
-  Index newStart = -1;
-  Index newEnd = -1;
-  TextEndChangeCmd endChange;
-  TextStartChangeCmd startChange;
-  do{
-    Piece& piece =  pieceTable->get(rover);
-    Length l = (rover == headIndex)? 0 :(piece.getTextEnd() - piece.getTextStart());
-    sum += l;
-    if(columnStart < sum){
-      removeFirstIndex = piece.getNext();
-      count_first = count + 1;
-      newEnd = piece.getTextStart() + columnStart - sum + l;
-      endChange.pieceIndex = rover;
-      endChange.textEndTarget = piece.getTextEnd();
-      ok += 1;
-    }else if(columnStart == sum){
-      removeFirstIndex = piece.getNext();
-      count_first = count + 1;
-      ok += 1;
-    }
-    if(columnEnd < sum){
-      removeLastIndex = piece.getPrev();
-      count_last = count - 1;
-      newStart = piece.getTextStart() + columnEnd - sum + l;
-      startChange.pieceIndex = rover;
-      startChange.textStartTarget = piece.getTextStart();
-      ok += 1;
-    }else if(columnEnd == sum){
-      removeLastIndex = rover;
-      count_last = count;
-      ok += 1;
-    }
-    if(ok == 2){
-      break;
-    }
-    rover = piece.getNext();
-    count += 1;
-  }while(rover != headIndex);
-  if(count_last >= count_first){
-    executor.setPieceNext(pieceTable->prevIndex(removeFirstIndex),pieceTable->nextIndex(removeLastIndex));
-    executor.setPiecePre(pieceTable->nextIndex(removeLastIndex), pieceTable->prevIndex(removeFirstIndex));
+  Position pos1 = getPiecePosition(line, columnStart);
+  Position pos2  = getPiecePosition(line, columnEnd);
+  
+  bool between1 = (pos1.textPosition == GET(pos1.pieceIndex).getTextEnd());
+  bool between2 = (pos2.textPosition == GET(pos2.pieceIndex).getTextEnd());
+  if(between1){
+    pos1.pieceIndex = GET(pos1.pieceIndex).getNext();
+    pos1.textPosition = GET(pos1.pieceIndex).getTextStart();
   }
-  if(newEnd!= -1){
-    executor.setTextEnd(pieceTable->prevIndex(removeFirstIndex), newEnd);
-  }
-  if(newStart!= -1){
-    executor.setTextStart(pieceTable->nextIndex(removeLastIndex),newStart);
+  if(pos1.pieceIndex == pos2.pieceIndex){
+    if(between1 && between2){
+      RemovePieceSequenceRedoCmd cmd;
+      cmd.pieceStart = pos1.pieceIndex;
+      cmd.pieceLast = pos2.pieceIndex;
+      cmd.piecePreStartTextEnd = GET(GET(pos1.pieceIndex).getPrev()).getTextEnd();
+      cmd.pieceSucLastTextStart = GET(GET(pos2.pieceIndex).getNext()).getTextStart();
+      executor.removePieceSequenceRedo(cmd);
+    }else if(between1){
+      executor.setTextStart(pos2.pieceIndex, pos2.textPosition);
+    }else if(between2){
+      executor.setTextEnd(pos1.pieceIndex, pos2.textPosition);
+    }else{
+      InsertInLineBetweenPieceRedoCmd cmd;
+      cmd.pieceBefore = pos1.pieceIndex;
+      cmd.textStart = pos2.textPosition;
+      cmd.textEnd = GET(pos2.pieceIndex).getTextEnd();
+      executor.insertInLineBetweenPieceRedo(cmd);
+      executor.setTextEnd(pos1.pieceIndex, pos1.textPosition);
+    }
+  }else{
+    Index pre = between1? GET(pos1.pieceIndex).getPrev():pos1.pieceIndex;
+    Index next = between2? GET(pos2.pieceIndex).getNext():pos2.pieceIndex;
+    if((!between1)&&(!between2)&& GET(pos1.pieceIndex).getNext()== pos2.pieceIndex){
+      executor.setTextEnd(pos1.pieceIndex, pos1.textPosition);
+      executor.setTextStart(pos2.pieceIndex, pos2.textPosition);
+    }else{
+      RemovePieceSequenceRedoCmd cmd;
+      cmd.pieceStart = pos1.pieceIndex;
+      cmd.pieceLast = pos2.pieceIndex;
+      cmd.piecePreStartTextEnd = between1? GET(pre).getTextEnd():pos1.textPosition;
+      cmd.pieceSucLastTextStart = between2? GET(next).getTextStart(): pos2.textPosition;
+      executor.removePieceSequenceRedo(cmd);
+    }
+
   }
 }
 
@@ -278,7 +264,7 @@ void EditorCore::insertText(LineNo line, Index column, const Character* chs, Len
 }
 
 void EditorCore::removeText(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd){
-  Position pos = getPiecePosition(lineStart, columnEnd);
+  Position pos = getPiecePosition(lineLast, columnEnd);
   Piece& piece = pieceTable->get(pos.pieceIndex);
   bool last = (piece.getNext()== pos.headIndex) && piece.getTextEnd() == pos.textPosition;
   
