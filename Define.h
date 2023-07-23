@@ -1,3 +1,13 @@
+/*********************************************************************************
+ * Author: ACE
+ * Description: common defines and type of commands
+ * Copyright (c) 2023 [ACE]. All rights reserved.
+ *
+ * This source code is licensed under the [GPL3.0] license, 
+ * details of which can be found in the license file.
+ *
+ *********************************************************************************/
+
 #ifndef __DEFINE_H
 #define __DEFINE_H
 

@@ -1,3 +1,13 @@
+/*********************************************************************************
+ * Author: ACE
+ * Description: CommandExecutor is responsible for process undo, redo operations
+ * Copyright (c) 2023 [ACE]. All rights reserved.
+ *
+ * This source code is licensed under the [GPL3.0] license, 
+ * details of which can be found in the license file.
+ *
+ *********************************************************************************/
+
 #ifndef __CMD_EXECUTOR_H
 #define __CMD_EXECUTOR_H
 

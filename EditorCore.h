@@ -1,3 +1,12 @@
+/*********************************************************************************
+ * Author: ACE
+ * Description: A template implementation of GapBuffer
+ * Copyright (c) 2023 [ACE]. All rights reserved.
+ *
+ * This source code is licensed under the [GPL3.0] license, 
+ * details of which can be found in the license file.
+ *
+ *********************************************************************************/
 #ifndef __EDITOR_CORE_H
 #define __EDITOR_CORE_H
 
@@ -28,19 +37,19 @@ public:
   Length getLineCount() const;
   String getContent() const;
   //support undo-redo
-  inline void appendTextU(const String& text){
+  inline void appendText(const String& text){
     executor.beginCmd();
     _appendText(text);
     executor.endCmd();
   }
   
-  inline void insertTextU(LineNo line, Index column, const String& text){
+  inline void insertText(LineNo line, Index column, const String& text){
     executor.beginCmd();
     _insertText(line,column, text);
     executor.endCmd();
   }
   
-  inline void removeTextU(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd){
+  inline void removeText(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd){
     executor.beginCmd();
     _removeText(lineStart,columnStart,lineLast,columnEnd);
     executor.endCmd();
