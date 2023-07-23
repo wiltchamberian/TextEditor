@@ -38,15 +38,26 @@ public:
       _T* tmp = chunk;
       chunk = new _T[newSize];
       if(id <= leftSize){
-        std::memcpy(chunk, tmp, id * sizeof(_T));
-        if(leftSize - id >0){
-          std::memcpy(chunk + newSize - rightSize - (leftSize - id), tmp +id, (leftSize - id)*sizeof(_T));
+        if(id > 0){
+          std::memcpy(chunk, tmp, id * sizeof(_T));
         }
-        std::memcpy(chunk + newSize - rightSize, tmp + siz - rightSize, rightSize * sizeof(_T));
+        if(leftSize - id >0){
+          std::memcpy(chunk + (newSize - rightSize - (leftSize - id)), tmp +id, (leftSize - id)*sizeof(_T));
+        }
+        if(rightSize >0){
+          std::memcpy(chunk + newSize - rightSize, tmp + siz - rightSize, rightSize * sizeof(_T));
+        }
+        
       }else if(id > leftSize){
-        std::memcpy(chunk, tmp, leftSize * sizeof(_T));
-        std::memcpy(chunk + leftSize ,tmp+siz-rightSize, (id- leftSize)*sizeof(_T) );
-        std::memcpy(chunk + newSize - rightSize + id - leftSize, tmp+ siz-rightSize + id- leftSize, (leftSize + rightSize -id)*sizeof(_T)); 
+        if(leftSize > 0){
+          std::memcpy(chunk, tmp, leftSize * sizeof(_T));
+        }
+        if(id > leftSize){
+          std::memcpy(chunk + leftSize ,tmp+siz-rightSize, (id- leftSize)*sizeof(_T) );
+        }
+        if(leftSize + rightSize -id > 0){
+          std::memcpy(chunk + newSize - rightSize + id - leftSize, tmp+ siz-rightSize + id- leftSize, (leftSize + rightSize -id)*sizeof(_T)); 
+        }
       }
       rightSize = leftSize + rightSize - id;
       leftSize = id; 
@@ -56,19 +67,21 @@ public:
       delete[] tmp;
     }else if(leftSize + rightSize < siz){
       if(id <= leftSize){
-        std::memmove(chunk +siz - rightSize - (leftSize - id), chunk + id, (leftSize - id)*sizeof(_T));
+        if(leftSize - id >0){
+          std::memmove(chunk +siz - rightSize - (leftSize - id), chunk + id, (leftSize - id)*sizeof(_T));
+        }
         rightSize = rightSize + leftSize - id;
         leftSize = id;
         res = leftSize;
         leftSize += 1;
-        siz += 1;
       }else{
-        std::memmove(chunk + leftSize,chunk + siz -rightSize, (id-leftSize)*sizeof(_T));
+        if(id - leftSize > 0){
+          std::memmove(chunk + leftSize,chunk + siz -rightSize, (id-leftSize)*sizeof(_T));
+        }
         rightSize = rightSize + leftSize - id;
         leftSize = id;
         res = leftSize;
         leftSize += 1;
-        siz += 1;
       }
     }else{
       assert(false);
@@ -97,12 +110,16 @@ public:
       return;
     }
     if(id < leftSize){
-      std::memmove(chunk + siz - rightSize -(leftSize - id - 1), chunk+id+1, (leftSize - id -1)*sizeof(_T));
+      if(leftSize - id - 1 >0){
+        std::memmove(chunk + siz - rightSize -(leftSize - id - 1), chunk+id+1, (leftSize - id -1)*sizeof(_T));
+      }
       rightSize = leftSize + rightSize - id - 1;
       leftSize = id;
       siz -= 1;
     }else{
-      std::memcpy(chunk + leftSize, chunk+ siz- rightSize, (id-leftSize)*sizeof(_T));
+      if(id > leftSize){
+        std::memcpy(chunk + leftSize, chunk+ siz- rightSize, (id-leftSize)*sizeof(_T));
+      }
       rightSize = leftSize + rightSize - id - 1;
       leftSize = id;
       siz -= 1;

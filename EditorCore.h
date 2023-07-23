@@ -30,28 +30,28 @@ public:
   //support undo-redo
   inline void appendTextU(const String& text){
     executor.beginCmd();
-    appendText(text);
+    _appendText(text);
     executor.endCmd();
   }
   
   inline void insertTextU(LineNo line, Index column, const String& text){
     executor.beginCmd();
-    insertText(line,column, text);
+    _insertText(line,column, text);
     executor.endCmd();
   }
   
   inline void removeTextU(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd){
     executor.beginCmd();
-    removeText(lineStart,columnStart,lineLast,columnEnd);
+    _removeText(lineStart,columnStart,lineLast,columnEnd);
     executor.endCmd();
   }
   
   void undo();
   void redo();
 private:
-  void appendText(const String& text);
-  void insertText(LineNo line, Index column, const String& text);
-  void removeText(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd);
+  void _appendText(const String& text);
+  void _insertText(LineNo line, Index column, const String& text);
+  void _removeText(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd);
 
   Position getPiecePosition(LineNo id, Index column);
   //insert a linebreak

@@ -11,6 +11,7 @@ EditorCore::EditorCore(){
   Index ptr = gapBuffer.insert(0);
   Index ind = pieceTable->add();
   gapBuffer[ptr] = ind;
+
 }
 
 EditorCore::~EditorCore(){
@@ -195,7 +196,7 @@ String EditorCore::getLineText(LineNo line) const{
     Index start = piece.getTextStart();
     Length len = piece.getTextEnd() - start;
     const Character* chs = textBuffer.data(start);
-    for(int i = 0; i< len; ++i){
+    for(Length i = 0; i< len; ++i){
       text.push_back(chs[i].ch);
     }
     length += len;
@@ -234,21 +235,21 @@ String EditorCore::getContent() const{
   return text;
 }
 
-void EditorCore::appendText(const String& text){
+void EditorCore::_appendText(const String& text){
   Index ind = gapBuffer.size();
   //last line is always an line without breakline
   Length len = getLineLength(ind - 1);
-  insertText(ind - 1, len, text);
+  _insertText(ind - 1, len, text);
 }
 
-void EditorCore::insertText(LineNo line, Index column, const String& text){
+void EditorCore::_insertText(LineNo line, Index column, const String& text){
   const Character* chs = (const Character*)(text.data());
   insertText(line,column, chs, text.size());
 }
 
 void EditorCore::insertText(LineNo line, Index column, const Character* chs, Length length){
-  int prev = 0;
-  for(int i= 0; i <= length; ++i){
+  Index prev = 0;
+  for(Length i= 0; i <= length; ++i){
     if((i== length) ||(chs[i].ch == '\n')){
       if(i - prev >0){
         insertInLine(line, column, chs+prev, i - prev);
@@ -263,7 +264,7 @@ void EditorCore::insertText(LineNo line, Index column, const Character* chs, Len
   }
 }
 
-void EditorCore::removeText(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd){
+void EditorCore::_removeText(LineNo lineStart,Index columnStart, LineNo lineLast, Index columnEnd){
   Position pos = getPiecePosition(lineLast, columnEnd);
   Piece& piece = pieceTable->get(pos.pieceIndex);
   bool last = (piece.getNext()== pos.headIndex) && piece.getTextEnd() == pos.textPosition;

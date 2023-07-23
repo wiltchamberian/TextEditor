@@ -17,7 +17,7 @@ void handTest(){
   core.redo();
   assert(content == core.getContent());
   Length n = core.getLineCount();
-  for(int i = 0; i < n ;++i){
+  for(Length i = 0; i < n ;++i){
     std::cout << core.getLineText(i);
   }
 }
@@ -38,6 +38,7 @@ void superTest(){
 }
 
 int main(int argc, char** argv){
+
   superTest();
   return 0;
 }
