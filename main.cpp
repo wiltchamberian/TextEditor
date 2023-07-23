@@ -15,6 +15,20 @@ void superTest(){
   std::cout << core.getContent() <<splitline;
   core.insertText(0, 7,"xyxyxyxyxy");
   std::cout << core.getContent() <<splitline;
+
+  for(int i=0; i< 100;++i){
+    core.undo();
+    core.redo();
+    core.undo();
+    core.undo();
+    core.redo();
+    core.redo();
+  }
+
+  std::cout << core.getContent() <<splitline;
+
+  core.removeText(0,3,4,8);
+  std::cout << core.getContent() <<splitline;
 }
 
 int main(int argc, char** argv){

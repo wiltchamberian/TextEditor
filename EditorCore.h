@@ -31,6 +31,7 @@ class EditorCore{
 public:
   EditorCore();
   ~EditorCore();
+  //the length include linebreak '\n'
   Length getLineLength(LineNo line) const; 
   void getLineText(LineNo line, Character* output, Length& length) const;
   String getLineText(LineNo line) const;
@@ -67,6 +68,7 @@ private:
   void insertLineBreak(LineNo line, Index column);
   void removeLineBreak(LineNo id);
 
+  bool hasBreakLine(LineNo id) const;
   //insert text (with linebreaks in it or not)
   void insertText(LineNo line, Index column, const Character* chs, Length length);
   void insertInLine(LineNo line, Index column, const Character* chs, Length length);

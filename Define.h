@@ -23,6 +23,10 @@ using LineNo = uint32_t;
 using Index = uint32_t;
 using Length = uint32_t;
 
+//if you want to debug uncomment this sentence and comment "#define LOG"
+//#define LOG std::cout<< this->getContent()<<"\n\n*******************\n\n";
+#define LOG
+
 enum class CmdType : uint16_t{
   Append,
   InsertLine,

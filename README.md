@@ -44,6 +44,7 @@ void superTest(){
   std::cout << core.getContent() <<splitline;
   core.insertText(0, 7,"xyxyxyxyxy");
   std::cout << core.getContent() <<splitline;
+
 }
 
 int main(int argc, char** argv){

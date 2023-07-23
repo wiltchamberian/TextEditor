@@ -125,14 +125,12 @@ public:
       }
       rightSize = leftSize + rightSize - id - 1;
       leftSize = id;
-      siz -= 1;
     }else{
       if(id > leftSize){
         std::memcpy(chunk + leftSize, chunk+ siz- rightSize, (id-leftSize)*sizeof(_T));
       }
       rightSize = leftSize + rightSize - id - 1;
       leftSize = id;
-      siz -= 1;
     }
   }
 private:
