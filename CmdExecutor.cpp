@@ -324,6 +324,66 @@ void CommandExecutor::removePieceSequenceUndo(const RemovePieceSequenceUndoCmd& 
   pieceTable->linkTogether(cmd.pieceLast, GET(cmd.pieceLast).getNext());
 }
 
+void CommandExecutor::removeLineBreakRedo(const RemoveLineBreakRedoCmd& cmd){
+  Length len = gapBuffer->size();
+  if(cmd.line >= len-1){
+    assert(false);
+  }
+
+  Index* ptr = gapBuffer->get(cmd.line);
+  Index* ptr2 = gapBuffer->get(cmd.line+1);
+
+  RemoveLineBreakUndoCmd* newCmd = (RemoveLineBreakUndoCmd*)undoBuffer.addCmd(CmdType::RemoveLineBreakUndo, sizeof(RemoveLineBreakUndoCmd));
+  newCmd->line = cmd.line + 1;
+  newCmd->pieceIndex = GET(*ptr2).getNext();
+
+  pieceTable->linkTogether(GET(*ptr).getPrev(), GET(*ptr2).getNext());
+  pieceTable->linkTogether(*ptr2,GET(*ptr).getNext());
+  pieceTable->remove(*ptr);
+  *ptr = *ptr2;
+  gapBuffer->remove(cmd.line + 1);
+  
+  return;
+}
+
+void CommandExecutor::removeLineBreakUndo(const RemoveLineBreakUndoCmd& cmd){
+  RemoveLineBreakRedoCmd* newCmd = (RemoveLineBreakRedoCmd*)redoBuffer.addCmd(CmdType::RemoveLineBreakRedo, sizeof(RemoveLineBreakRedoCmd));
+  newCmd->line = cmd.line - 1;
+  
+  gapBuffer->insert(cmd.line);
+  Index* ptr = gapBuffer->get(cmd.line);
+  Index* ptr_pre = gapBuffer->get(cmd.line - 1);
+
+  Index index = pieceTable->add();
+  pieceTable->linkTogether(GET(cmd.pieceIndex).getPrev(),index);
+  pieceTable->linkTogether(index, GET(*ptr_pre).getNext());
+  pieceTable->linkTogether(*ptr_pre, cmd.pieceIndex);
+  *ptr = *ptr_pre;
+  *ptr_pre = index;
+
+  return;
+}
+
+void CommandExecutor::removeOneLineWithoutLineBreakRedo(const RemoveOneLineWithoutLineBreakRedoCmd& cmd){
+  RemoveOneLineWithoutLineBreakUndoCmd* newCmd = (RemoveOneLineWithoutLineBreakUndoCmd*)undoBuffer.addCmd(CmdType::RemoveOneLineWithoutLineBreakUndo, sizeof(RemoveOneLineWithoutLineBreakUndoCmd));
+  newCmd->tail = cmd.tail;
+  newCmd->first = GET(cmd.tail).getNext();
+  newCmd->last = GET(cmd.tail).getPrev();
+
+  GET(cmd.tail).setPrev(cmd.tail);
+  GET(cmd.tail).setNext(cmd.tail);
+
+  //not release pieces
+}
+
+void CommandExecutor::removeOneLineWithoutLineBreakUndo(const RemoveOneLineWithoutLineBreakUndoCmd& cmd){
+  RemoveOneLineWithoutLineBreakRedoCmd* newCmd = (RemoveOneLineWithoutLineBreakRedoCmd*)undoBuffer.addCmd(CmdType::RemoveOneLineWithoutLineBreakRedo, sizeof(RemoveOneLineWithoutLineBreakRedoCmd));
+  newCmd->tail = cmd.tail;
+
+  GET(cmd.tail).setNext(cmd.first);
+  GET(cmd.tail).setPrev(cmd.last);
+}
+
 void CommandExecutor::act(CmdBuffer& current, CmdBuffer& target){
   EndCmd run;
   target.addCmd(&run);
@@ -540,6 +600,26 @@ void CommandExecutor::act(CmdBuffer& current, CmdBuffer& target){
       case CmdType::RemovePieceSequenceUndo:{
         const RemovePieceSequenceUndoCmd* cmd = (RemovePieceSequenceUndoCmd*)head;
         removePieceSequenceUndo(*cmd);
+      }
+      break;
+      case CmdType::RemoveLineBreakRedo:{
+        const RemoveLineBreakRedoCmd* cmd = (RemoveLineBreakRedoCmd*)head;
+        removeLineBreakRedo(*cmd);
+      }
+      break;
+      case CmdType::RemoveLineBreakUndo:{
+        const RemoveLineBreakUndoCmd* cmd = (RemoveLineBreakUndoCmd*)head;
+        removeLineBreakUndo(*cmd);
+      }
+      break;
+      case CmdType::RemoveOneLineWithoutLineBreakRedo:{
+        const RemoveOneLineWithoutLineBreakRedoCmd* cmd = (RemoveOneLineWithoutLineBreakRedoCmd*)head;
+        removeOneLineWithoutLineBreakRedo(*cmd);
+      }
+      break;
+      case CmdType::RemoveOneLineWithoutLineBreakUndo:{
+        const RemoveOneLineWithoutLineBreakUndoCmd* cmd = (RemoveOneLineWithoutLineBreakUndoCmd*)head;
+        removeOneLineWithoutLineBreakUndo(*cmd);
       }
       break;
       default:

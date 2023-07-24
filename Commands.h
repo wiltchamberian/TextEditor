@@ -314,6 +314,50 @@ public:
   Index pieceSucLastTextStart;
 };
 
+class RemoveLineBreakRedoCmd{
+public:
+  RemoveLineBreakRedoCmd(){
+    head.type = CmdType::RemoveLineBreakRedo;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  LineNo line;
+};
+
+class RemoveLineBreakUndoCmd{
+public:
+  RemoveLineBreakUndoCmd(){
+    head.type = CmdType::RemoveLineBreakUndo;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  LineNo line;//insert position
+  Index pieceIndex; //the start of new line
+};
+
+class RemoveOneLineWithoutLineBreakRedoCmd{
+public:
+  RemoveOneLineWithoutLineBreakRedoCmd(){
+    head.type = CmdType::RemoveOneLineWithoutLineBreakRedo;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  Index tail;
+};
+
+class RemoveOneLineWithoutLineBreakUndoCmd{
+public:
+  RemoveOneLineWithoutLineBreakUndoCmd(){
+    head.type = CmdType::RemoveOneLineWithoutLineBreakUndo;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  //first->...->last->tail->(first)
+  Index tail;
+  Index first;
+  Index last;
+};
+
 ///////////////////////////////
 
 #endif

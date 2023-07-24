@@ -16,7 +16,7 @@
 template<class _T>
 using SVector = std::vector<_T>;
 
-using Addr = size_t;
+using Addr = Length;
 
 template<typename _T>
 class SparseSet {
@@ -118,6 +118,12 @@ public:
     Index ind = SparseSet<Piece>::add();
     vec[ind].setPrev(ind);
     vec[ind].setNext(ind);
+    /////TODO this may cause issue!
+    //assert(vec[ind].textEnd == 0);
+    //assert(vec[ind].textStart == 0);
+    vec[ind].setTextStart(0);
+    vec[ind].setTextEnd(0);
+    
     return ind;
   }
   void setTextStart(Index node, Index textStart){

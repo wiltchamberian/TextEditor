@@ -9,7 +9,7 @@ CmdHead* CmdBuffer::addCmd(CmdType type, Length length){
   if(used_size + length > chunk_size){
     //re_allocate, by stragegy like vector
     uint8_t* tmp = chunk;
-    Length newSize = std::max<size_t>(chunk_size * 2, used_size + length);
+    Length newSize = std::max<Length>(chunk_size * 2, used_size + length);
     chunk = new uint8_t[newSize];
     std::memcpy(chunk + newSize - used_size, tmp + chunk_size - used_size, used_size);
     delete[] tmp;

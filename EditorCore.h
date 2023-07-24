@@ -66,6 +66,9 @@ private:
   Position getPiecePosition(LineNo id, Index column);
   //insert a linebreak
   void insertLineBreak(LineNo line, Index column);
+  //remove the whole line(include the linebreak)
+  void removeOneLine(LineNo id);
+  //remove the linebreak of the line id 
   void removeLineBreak(LineNo id);
 
   bool hasBreakLine(LineNo id) const;
@@ -74,6 +77,7 @@ private:
   void insertInLine(LineNo line, Index column, const Character* chs, Length length);
   void insertInLine(const Position& position, const Character* chs, Length length);
   void removeInLine(LineNo line, Index columnStart, Index columnEnd);
+  void removeOneLineWithoutLineBreak(LineNo line);
   GapBuffer<Index> gapBuffer;
   PieceTable* pieceTable = nullptr;
   CommandExecutor executor;

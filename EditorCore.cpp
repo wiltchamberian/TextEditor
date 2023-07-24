@@ -67,6 +67,12 @@ void EditorCore::removeInLine(LineNo line, Index columnStart, Index columnEnd){
   }
 }
 
+void EditorCore::removeOneLineWithoutLineBreak(LineNo line){
+  RemoveOneLineWithoutLineBreakRedoCmd cmd;
+  cmd.tail = *gapBuffer.get(line);
+  executor.removeOneLineWithoutLineBreakRedo(cmd);
+}
+
 void EditorCore::undo(){
   executor.undo();
 }
@@ -81,12 +87,12 @@ void EditorCore::insertInLine(LineNo line, Index column, const Character* chs, L
 }
 
 void EditorCore::insertInLine(const Position& position, const Character* chs, Length length){
+  Index headIndex = gapBuffer[position.line];
+  Index rover = headIndex;
+
   Index textStart = textBuffer.getEnd();
   textBuffer.addCharacters(chs, length);
   Index textEnd = textBuffer.getEnd();
-  
-  Index headIndex = gapBuffer[position.line];
-  Index rover = headIndex;
 
   if(position.textPosition < GET(position.pieceIndex).getTextEnd()){
       InsertInLineInPieceRedoCmd cmd;
@@ -102,10 +108,11 @@ void EditorCore::insertInLine(const Position& position, const Character* chs, Le
       lastEdit = position.pieceIndex;
   }
   else if(position.textPosition == GET(position.pieceIndex).getTextEnd()){
-    if(lastEdit == position.pieceIndex){
-      //this is another method to decide,
-      Index end = textBuffer.getEnd();
-      assert(GET(position.pieceIndex).getTextEnd() == end);
+    Index txtEnd = GET(position.pieceIndex).getTextEnd();
+    Index txtStart = GET(position.pieceIndex).getTextStart();
+    bool isTailPiece = (txtEnd==txtStart)? true : (textBuffer.data(txtStart)->ch=='\n');
+    bool append = (txtEnd == textStart); //textStart is the original textEnd
+    if((append&& (!isTailPiece)) /*lastEdit == position.pieceIndex*/){
       executor.setTextEnd(position.pieceIndex,GET(position.pieceIndex).getTextEnd()+ textEnd- textStart);
     }else{
       InsertInLineBetweenPieceRedoCmd cmd;
@@ -123,8 +130,6 @@ void EditorCore::insertInLine(const Position& position, const Character* chs, Le
 
 void EditorCore::insertLineBreak(LineNo line, Index column){
   Position pos = getPiecePosition(line,column);
-
-  //Index ind = executor.insertEmptyLine(line + 1);
 
   Index textStart = textBuffer.getEnd();
   textBuffer.addCharacter(Character('\n'));
@@ -227,7 +232,7 @@ String EditorCore::getContent() const{
     do{
       auto start = GET(rover).getTextStart();
       auto end = GET(rover).getTextEnd();
-      for(int j = start; j < end;++j){
+      for(Index j = start; j < end;++j){
         text.push_back(textBuffer.data(j)->ch);
       }
       rover = GET(rover).getNext();
@@ -277,16 +282,29 @@ void EditorCore::_removeText(LineNo lineStart,Index columnStart, LineNo lineLast
   
   if(lineStart == lineLast){
     if(columnStart == 0 && last){
-      removeLineBreak(lineStart);
+      removeOneLine(lineStart);
       LOG
     }else{
       removeInLine(lineStart, columnStart, columnEnd);
       LOG
     }
   }else{
-    Length l = lineLast -lineStart - 1;
+    //we remove from last to first so that previous line id won't be affected
+    if(last){
+      removeOneLineWithoutLineBreak(lineLast);
+      LOG
+    }else{
+      removeInLine(lineLast, 0, columnEnd);
+      LOG
+    } 
+
+    for(LineNo i=lineLast-  1; i > lineStart;--i){
+      removeOneLine(i);
+      LOG
+    }
+
     if(columnStart == 0){
-      removeLineBreak(lineStart);
+      removeOneLine(lineStart);
       LOG
     }else{
       Length firstLineEnd = getLineLength(lineStart);
@@ -294,24 +312,13 @@ void EditorCore::_removeText(LineNo lineStart,Index columnStart, LineNo lineLast
         firstLineEnd -= 1;
       }
       removeInLine(lineStart,columnStart, firstLineEnd);
-      LOG
-      lineStart += 1;
-    }
-    for(int i=0; i<l;++i){
       removeLineBreak(lineStart);
       LOG
     }
-    if(last){
-      removeLineBreak(lineStart);
-      LOG
-    }else{
-      removeInLine(lineStart, 0, columnEnd);
-      LOG
-    } 
   }
 }
 
-void EditorCore::removeLineBreak(LineNo id){
+void EditorCore::removeOneLine(LineNo id){
   Index* ptr = gapBuffer.get(id);
   LineCmd cmd(CmdType::InsertLine, id);
   cmd.pieceIndex = *ptr;
@@ -319,7 +326,13 @@ void EditorCore::removeLineBreak(LineNo id){
   executor.addCmd(&cmd);
 }
 
- //old version
+void EditorCore::removeLineBreak(LineNo id){
+  RemoveLineBreakRedoCmd cmd;
+  cmd.line = id;
+  executor.removeLineBreakRedo(cmd);
+  executor.removeLineBreak(id);
+}
+
 Position EditorCore::getPiecePosition(LineNo id, Index column){
   Position pos;
   pos.line = id;
@@ -341,29 +354,4 @@ Position EditorCore::getPiecePosition(LineNo id, Index column){
 
   return pos;
 }
-
-
-/*
-Position EditorCore::getPiecePosition(LineNo id, Index column){
-  Position pos;
-  pos.line = id;
-  pos.column = column;
-  pos.headIndex = *gapBuffer.get(id);
-  Piece* head = &GET(GET(pos.headIndex).getNext());
-  Piece* rover = head;
-  Length l = 0;
-
-  do{
-    if(column <= l){
-      pos.pieceIndex = pieceTable->getAddress(*rover);
-      pos.textPosition = rover->getTextEnd() - (l-column);
-      break;
-    }
-    l += rover->getTextEnd() - rover->getTextStart();
-    rover = &(pieceTable->get(rover->getNext()));
-  }while(head != rover);
-
-  return pos;
-}
-*/
 

@@ -16,12 +16,18 @@
 #include <array>
 #include <vector>
 
+template<typename _T>
+using Vec = std::vector<_T>;
+
 using String = std::string;
 
 #define GET(a) pieceTable->get(a)
 using LineNo = uint32_t;
 using Index = uint32_t;
 using Length = uint32_t;
+using Byte = uint8_t;
+using Real = float;
+using Num = uint32_t;
 
 //if you want to debug uncomment this sentence and comment "#define LOG"
 //#define LOG std::cout<< this->getContent()<<"\n\n*******************\n\n";
@@ -63,7 +69,11 @@ enum class CmdType : uint16_t{
   InsertBreakBetweenPieceUndo,
   RemovePieceSequenceRedo,
   RemovePieceSequenceUndo,
-
+  RemoveLineBreakRedo,
+  RemoveLineBreakUndo,
+  RemoveOneLineWithoutLineBreakRedo,
+  RemoveOneLineWithoutLineBreakUndo,
+  
   //after these are simple cmd, which may not perserve the underlying structure
   //but logically structure is peserved.
   SimpleInsert,
