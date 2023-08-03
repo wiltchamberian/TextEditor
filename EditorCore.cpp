@@ -3,6 +3,7 @@
 
 EditorCore::EditorCore(){
   pieceTable = new PieceTable();
+  textBuffer.addCharacter(Character('\n'));
 
   executor.setGapBuffer(&(this->gapBuffer));
   executor.setPieceTable((this->pieceTable));
@@ -131,9 +132,9 @@ void EditorCore::insertInLine(const Position& position, const Character* chs, Le
 void EditorCore::insertLineBreak(LineNo line, Index column){
   Position pos = getPiecePosition(line,column);
 
-  Index textStart = textBuffer.getEnd();
-  textBuffer.addCharacter(Character('\n'));
-  Index textEnd = textBuffer.getEnd();
+  //corresponding to the default text '\n'
+  Index textStart = 0;
+  Index textEnd = 1;
 
   //has linebreak line
   if(GET(pos.headIndex).getTextEnd()-GET(pos.headIndex).getTextStart() !=0){
@@ -319,11 +320,20 @@ void EditorCore::_removeText(LineNo lineStart,Index columnStart, LineNo lineLast
 }
 
 void EditorCore::removeOneLine(LineNo id){
+/* deprecated
   Index* ptr = gapBuffer.get(id);
   LineCmd cmd(CmdType::InsertLine, id);
   cmd.pieceIndex = *ptr;
   gapBuffer.remove(id);
+
+  Index tail = GET(cmd.pieceIndex).getNext();
+  pieceTable->erase(cmd.pieceIndex, tail);
+
   executor.addCmd(&cmd);
+*/
+  RemoveLineRedoCmd cmd;
+  cmd.line = id;
+  executor.removeLineRedo(cmd);
 }
 
 void EditorCore::removeLineBreak(LineNo id){

@@ -22,18 +22,6 @@ public:
   uint16_t length;
 };
 
-class TextStartEndChangeCmd{
-public:
-  TextStartEndChangeCmd(){
-    head.type = CmdType::TextStartEndChange;
-    head.length = sizeof(*this);
-  }
-  CmdHead head;
-  Index pieceIndex;
-  Index textStart;
-  Index textEnd;
-};
-
 class PieceInfoChangeCmd{
 public:
   PieceInfoChangeCmd(){
@@ -82,6 +70,18 @@ public:
   Index textEndTarget;
 };
 
+class TextStartEndChangeCmd{
+public:
+  TextStartEndChangeCmd(){
+    head.type = CmdType::TextStartEndChange;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  Index pieceIndex;
+  Index textStart;
+  Index textEnd;
+};
+
 class EndCmd{
 public:
   EndCmd(){
@@ -103,6 +103,27 @@ public:
   CmdHead head;
   LineNo line;
   Index pieceIndex;
+};
+
+class RemoveLineRedoCmd{
+public:
+  RemoveLineRedoCmd(){
+    head.type = CmdType::RemoveLineRedo;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  LineNo line;
+};
+
+class RemoveLineUndoCmd{
+public:
+  RemoveLineUndoCmd(){
+    head.type = CmdType::RemoveLineUndo;
+    head.length = sizeof(*this);
+  }
+  CmdHead head;
+  LineNo line;
+  Index pieceTail;
 };
 
 class InsertLineBreakCmd{
@@ -171,24 +192,6 @@ public:
   }
   CmdHead head;
   Index pieceIndex;
-};
-
-class PieceBatchCreateCmd{
-public:
-  PieceBatchCreateCmd(){
-    head.type = CmdType::PieceBatchCreate;
-  }
-  CmdHead head;
-  Index pieceIndex[1];
-};
-
-class PieceBatchRemoveCmd{
-public:
-  PieceBatchRemoveCmd(){
-    head.type = CmdType::PieceBatchRemove;
-  }
-  CmdHead head;
-  Index pieceIndex[1];
 };
 
 class InsertInLineInPieceRedoCmd{
@@ -297,6 +300,8 @@ public:
   CmdHead head;
   Index pieceStart;
   Index pieceLast;
+  Index piecePreStart;
+  Index pieceSucLast;
   Index piecePreStartTextEnd;
   Index pieceSucLastTextStart;
 };
@@ -343,6 +348,7 @@ public:
   }
   CmdHead head;
   Index tail;
+  Index last;
 };
 
 class RemoveOneLineWithoutLineBreakUndoCmd{

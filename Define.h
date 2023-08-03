@@ -16,6 +16,8 @@
 #include <array>
 #include <vector>
 
+#define INVALID_HANDLE (uint32_t)(-1)
+
 template<typename _T>
 using Vec = std::vector<_T>;
 
@@ -73,6 +75,8 @@ enum class CmdType : uint16_t{
   RemoveLineBreakUndo,
   RemoveOneLineWithoutLineBreakRedo,
   RemoveOneLineWithoutLineBreakUndo,
+  RemoveLineRedo,
+  RemoveLineUndo,
   
   //after these are simple cmd, which may not perserve the underlying structure
   //but logically structure is peserved.

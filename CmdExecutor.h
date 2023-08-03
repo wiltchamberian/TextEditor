@@ -77,6 +77,8 @@ public:
   void removeLineBreakUndo(const RemoveLineBreakUndoCmd& cmd);
   void removeOneLineWithoutLineBreakRedo(const RemoveOneLineWithoutLineBreakRedoCmd& cmd);
   void removeOneLineWithoutLineBreakUndo(const RemoveOneLineWithoutLineBreakUndoCmd& cmd);
+  void removeLineRedo(const RemoveLineRedoCmd& cmd);
+  void removeLineUndo(const RemoveLineUndoCmd& cmd);
 private:
   void act(CmdBuffer& current, CmdBuffer& target);
   void executeTextStartChangeCommand(const TextStartChangeCmd& cmd);

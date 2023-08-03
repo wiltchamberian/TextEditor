@@ -215,7 +215,8 @@ void CommandExecutor::insertInLineBetweenPieceUndo(const InsertInLineBetweenPiec
   newCmd->textStart = GET(cmd.pieceIndex).getTextStart();
   newCmd->textEnd = GET(cmd.pieceIndex).getTextEnd();
 
-  pieceTable->erase(cmd.pieceIndex);
+  pieceTable->unLink(cmd.pieceIndex);
+  pieceTable->undoAdd(cmd.pieceIndex);
 }
 
 void CommandExecutor::insertBreakInPieceRedo(const InsertBreakInPieceRedoCmd& cmd){
@@ -259,8 +260,8 @@ void CommandExecutor::insertBreakInPieceUndo(const InsertBreakInPieceUndoCmd& cm
   pieceTable->setText(head, GET(GET(headup).getPrev()).getTextStart(),
                       GET(GET(head).getNext()).getTextEnd());
   pieceTable->linkTogether(GET(headup).getPrev(), head);
-  pieceTable->erase(GET(head).getPrev());
   pieceTable->erase(GET(head).getNext());
+  pieceTable->erase(GET(head).getPrev());
 }
 
 void CommandExecutor::insertBreakBetweenPieceRedo(const InsertBreakBetweenPieceRedoCmd& cmd){
@@ -295,7 +296,9 @@ void CommandExecutor::insertBreakBetweenPieceUndo(const InsertBreakBetweenPieceU
   newCmd->textEnd = GET(newHead).getTextEnd();
 
   pieceTable->linkTogether(GET(oldHead).getPrev(),GET(newHead).getNext());
+  pieceTable->linkTogether(GET(newHead).getPrev(),oldHead);
   pieceTable->remove(newHead);
+  
   gapBuffer->remove(newHead);
 }
 
@@ -303,12 +306,15 @@ void CommandExecutor::removePieceSequenceRedo(const RemovePieceSequenceRedoCmd& 
   RemovePieceSequenceUndoCmd* newCmd = (RemovePieceSequenceUndoCmd*)undoBuffer.addCmd(CmdType::RemovePieceSequenceUndo,sizeof(RemovePieceSequenceUndoCmd));
   newCmd->pieceStart = cmd.pieceStart;
   newCmd->pieceLast = cmd.pieceLast;
-  newCmd->piecePreStartTextEnd = GET(GET(cmd.pieceStart).getPrev()).getTextEnd();
-  newCmd->pieceSucLastTextStart = GET(GET(cmd.pieceLast).getNext()).getTextStart();
+  newCmd->piecePreStart = GET(cmd.pieceStart).getPrev();
+  newCmd->pieceSucLast = GET(cmd.pieceLast).getNext();
+  newCmd->piecePreStartTextEnd = GET(newCmd->piecePreStart).getTextEnd();
+  newCmd->pieceSucLastTextStart = GET(newCmd->pieceSucLast).getTextStart();
   
   pieceTable->setTextEnd(GET(cmd.pieceStart).getPrev(),cmd.piecePreStartTextEnd);
   pieceTable->setTextStart(GET(cmd.pieceLast).getNext(), cmd.pieceSucLastTextStart);
-  pieceTable->unLink(cmd.pieceStart, cmd.pieceLast);
+  
+  pieceTable->erase(cmd.pieceStart, cmd.pieceLast);
 }
 
 void CommandExecutor::removePieceSequenceUndo(const RemovePieceSequenceUndoCmd& cmd){
@@ -320,8 +326,8 @@ void CommandExecutor::removePieceSequenceUndo(const RemovePieceSequenceUndoCmd& 
 
   pieceTable->setTextEnd(GET(cmd.pieceStart).getPrev(),cmd.piecePreStartTextEnd);
   pieceTable->setTextStart(GET(cmd.pieceLast).getNext(), cmd.pieceSucLastTextStart);
-  pieceTable->linkTogether(GET(cmd.pieceStart).getPrev(), cmd.pieceStart);
-  pieceTable->linkTogether(cmd.pieceLast, GET(cmd.pieceLast).getNext());
+  
+  pieceTable->undoErase(cmd.piecePreStart, cmd.pieceSucLast, cmd.pieceLast);
 }
 
 void CommandExecutor::removeLineBreakRedo(const RemoveLineBreakRedoCmd& cmd){
@@ -354,7 +360,7 @@ void CommandExecutor::removeLineBreakUndo(const RemoveLineBreakUndoCmd& cmd){
   Index* ptr = gapBuffer->get(cmd.line);
   Index* ptr_pre = gapBuffer->get(cmd.line - 1);
 
-  Index index = pieceTable->add();
+  Index index = pieceTable->undoRemove();
   pieceTable->linkTogether(GET(cmd.pieceIndex).getPrev(),index);
   pieceTable->linkTogether(index, GET(*ptr_pre).getNext());
   pieceTable->linkTogether(*ptr_pre, cmd.pieceIndex);
@@ -367,21 +373,36 @@ void CommandExecutor::removeLineBreakUndo(const RemoveLineBreakUndoCmd& cmd){
 void CommandExecutor::removeOneLineWithoutLineBreakRedo(const RemoveOneLineWithoutLineBreakRedoCmd& cmd){
   RemoveOneLineWithoutLineBreakUndoCmd* newCmd = (RemoveOneLineWithoutLineBreakUndoCmd*)undoBuffer.addCmd(CmdType::RemoveOneLineWithoutLineBreakUndo, sizeof(RemoveOneLineWithoutLineBreakUndoCmd));
   newCmd->tail = cmd.tail;
-  newCmd->first = GET(cmd.tail).getNext();
   newCmd->last = GET(cmd.tail).getPrev();
 
-  GET(cmd.tail).setPrev(cmd.tail);
-  GET(cmd.tail).setNext(cmd.tail);
-
-  //not release pieces
+  pieceTable->erase(GET(cmd.tail).getNext(),newCmd->last);
 }
 
 void CommandExecutor::removeOneLineWithoutLineBreakUndo(const RemoveOneLineWithoutLineBreakUndoCmd& cmd){
-  RemoveOneLineWithoutLineBreakRedoCmd* newCmd = (RemoveOneLineWithoutLineBreakRedoCmd*)undoBuffer.addCmd(CmdType::RemoveOneLineWithoutLineBreakRedo, sizeof(RemoveOneLineWithoutLineBreakRedoCmd));
+  RemoveOneLineWithoutLineBreakRedoCmd* newCmd = (RemoveOneLineWithoutLineBreakRedoCmd*)redoBuffer.addCmd(CmdType::RemoveOneLineWithoutLineBreakRedo, sizeof(RemoveOneLineWithoutLineBreakRedoCmd));
   newCmd->tail = cmd.tail;
+  newCmd->last = cmd.last;
 
-  GET(cmd.tail).setNext(cmd.first);
-  GET(cmd.tail).setPrev(cmd.last);
+  pieceTable->undoErase(cmd.tail, cmd.tail, cmd.last);
+}
+
+void CommandExecutor::removeLineRedo(const RemoveLineRedoCmd& cmd){
+  Index tail = *(gapBuffer->get(cmd.line));
+  
+  RemoveLineUndoCmd* newCmd = (RemoveLineUndoCmd*)undoBuffer.addCmd(CmdType::RemoveLineUndo,sizeof(RemoveLineUndoCmd));
+  newCmd->line = cmd.line;
+  newCmd->pieceTail = tail;
+
+  gapBuffer->remove(cmd.line);
+  pieceTable->eraseCircularList(tail);
+}
+
+void CommandExecutor::removeLineUndo(const RemoveLineUndoCmd& cmd){
+  RemoveLineRedoCmd* newCmd = (RemoveLineRedoCmd*)redoBuffer.addCmd(CmdType::RemoveLineRedo, sizeof(RemoveLineRedoCmd));
+  newCmd->line = cmd.line;
+
+  gapBuffer->insert(cmd.line);
+  pieceTable->undoEraseCircularList(cmd.pieceTail);
 }
 
 void CommandExecutor::act(CmdBuffer& current, CmdBuffer& target){
@@ -429,27 +450,6 @@ void CommandExecutor::act(CmdBuffer& current, CmdBuffer& target){
         newCmd.next = pieceTable->get(cmd->pieceIndex).getNext();
         target.addCmd(&newCmd);
         pieceTable->remove(cmd->pieceIndex);
-      }
-      break;
-      case CmdType::PieceBatchCreate:{
-        PieceBatchCreateCmd* cmd = (PieceBatchCreateCmd*)head;
-        PieceBatchRemoveCmd* newCmd =(PieceBatchRemoveCmd*)target.addCmd(CmdType::PieceBatchRemove, cmd->head.length);
-        size_t count = (cmd->head.length - sizeof(CmdHead))/sizeof(Index);
-        for(int i=0; i<count;++i){
-          newCmd->pieceIndex[i] = pieceTable->add();
-        }
-      }
-      break;
-      case CmdType::PieceBatchRemove:{
-        PieceBatchRemoveCmd* cmd = (PieceBatchRemoveCmd*)head;
-        PieceBatchCreateCmd* newCmd =(PieceBatchCreateCmd*)target.addCmd(CmdType::PieceBatchCreate, cmd->head.length);
-        size_t count = (cmd->head.length - sizeof(CmdHead))/sizeof(Index);
-        for(int i= 0; i< count;++i){
-          newCmd->pieceIndex[i] = cmd->pieceIndex[i];
-        }
-        for(int i=0; i<count;++i){
-          pieceTable->remove(cmd->pieceIndex[i]);
-        }
       }
       break;
       case CmdType::SetPrevCmd:{
@@ -513,6 +513,16 @@ void CommandExecutor::act(CmdBuffer& current, CmdBuffer& target){
         newCmd.line = cmd->line;
         newCmd.pieceIndex = cmd->pieceIndex;
         target.addCmd(&newCmd);     
+      }
+      break;
+      case CmdType::RemoveLineRedo:{
+        RemoveLineRedoCmd* cmd = (RemoveLineRedoCmd*)head;
+        removeLineRedo(*cmd);
+      }
+      break;
+      case CmdType::RemoveLineUndo:{
+        RemoveLineUndoCmd* cmd = (RemoveLineUndoCmd*)head;
+        removeLineUndo(*cmd);
       }
       break;
       case CmdType::TextStartEndChange:{
