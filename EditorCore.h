@@ -31,12 +31,14 @@ class EditorCore{
 public:
   EditorCore();
   ~EditorCore();
+
   //the length include linebreak '\n'
   Length getLineLength(LineNo line) const; 
   void getLineText(LineNo line, Character* output, Length& length) const;
   String getLineText(LineNo line) const;
   Length getLineCount() const;
   String getContent() const;
+
   //support undo-redo
   inline void appendText(const String& text){
     executor.beginCmd();

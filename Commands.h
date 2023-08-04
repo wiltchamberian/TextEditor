@@ -126,10 +126,10 @@ public:
   Index pieceTail;
 };
 
-class InsertLineBreakCmd{
+class InsertEmptyLineCmd{
 public:
-  InsertLineBreakCmd(){
-    head.type = CmdType::InsertLineBreak;
+  InsertEmptyLineCmd(){
+    head.type = CmdType::InsertEmptyLine;
     head.length = sizeof(*this);
   }
   CmdHead head;
@@ -137,10 +137,10 @@ public:
   Index pieceIndex;
 };
 
-class RemoveLineBreakCmd{
+class RemoveEmptyLineCmd{
 public:
-  RemoveLineBreakCmd(){
-    head.type = CmdType::RemoveLineBreak;
+  RemoveEmptyLineCmd(){
+    head.type = CmdType::RemoveEmptyLine;
     head.length = sizeof(*this);
   }
   CmdHead head;

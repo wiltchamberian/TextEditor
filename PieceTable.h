@@ -175,6 +175,7 @@ public:
     return;
   }
 
+  /*
   Index add(const Piece& a) {
     Index addr;
     if(vec[0].getNext() != 0){
@@ -186,6 +187,7 @@ public:
     vec.push_back(a);
     return vec.size()-1;
   }
+  */
   
   Index add(){
     Index ind = 0;
@@ -194,8 +196,6 @@ public:
       unLink(ind);
       vec[ind].setPrev(ind);
       vec[ind].setNext(ind);
-      vec[ind].setTextStart(0);
-      vec[ind].setTextEnd(0);
       return ind;
     }
     vec.emplace_back();
@@ -206,6 +206,13 @@ public:
     assert(vec[ind].getTextStart()==0 && vec[ind].getTextEnd() ==0);
     
     return ind;
+  }
+
+  Index addAndClearText(){
+    Index res = add();
+    vec[res].setTextStart(0);
+    vec[res].setTextEnd(0);
+    return res;
   }
 
   void undoAdd(Index ind){
@@ -231,10 +238,6 @@ public:
     vec[addr].setPrev(0);
     vec[0].setNext(addr);
     return;
-  }
-
-  Index undoRemove(){
-    return add();
   }
 private:
   bool hasFreeNode() const{

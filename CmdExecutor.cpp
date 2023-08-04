@@ -148,10 +148,10 @@ void CommandExecutor::removePiece(Index pieceIndex){
 
 Index CommandExecutor::insertEmptyLine(Index lineNo){
   Index index = gapBuffer->insert(lineNo);
-  Index ind = pieceTable->add();
+  Index ind = pieceTable->addAndClearText();
   (*gapBuffer)[index] = ind;
 
-  RemoveLineBreakCmd cmd;
+  RemoveEmptyLineCmd cmd;
   cmd.lineNo = lineNo;
   cmd.pieceIndex = ind;
   addCmd(&cmd);
@@ -360,7 +360,7 @@ void CommandExecutor::removeLineBreakUndo(const RemoveLineBreakUndoCmd& cmd){
   Index* ptr = gapBuffer->get(cmd.line);
   Index* ptr_pre = gapBuffer->get(cmd.line - 1);
 
-  Index index = pieceTable->undoRemove();
+  Index index = pieceTable->add();
   pieceTable->linkTogether(GET(cmd.pieceIndex).getPrev(),index);
   pieceTable->linkTogether(index, GET(*ptr_pre).getNext());
   pieceTable->linkTogether(*ptr_pre, cmd.pieceIndex);
@@ -414,22 +414,22 @@ void CommandExecutor::act(CmdBuffer& current, CmdBuffer& target){
       break;
     }
     switch(head->type){
-      case CmdType::InsertLineBreak:{
-        InsertLineBreakCmd* cmd = (InsertLineBreakCmd*)(head);
-        Index ind = pieceTable->add();
+      case CmdType::InsertEmptyLine:{
+        InsertEmptyLineCmd* cmd = (InsertEmptyLineCmd*)(head);
+        Index ind = pieceTable->addAndClearText();
         Index pt = gapBuffer->insert(cmd->lineNo);
         (*gapBuffer)[pt] = ind;
-        RemoveLineBreakCmd newCmd;
+        RemoveEmptyLineCmd newCmd;
         newCmd.lineNo = cmd->lineNo;
         newCmd.pieceIndex = ind;
         target.addCmd(&newCmd);
       }
       break;
-      case CmdType::RemoveLineBreak:{
-        RemoveLineBreakCmd* cmd = (RemoveLineBreakCmd*)(head);
+      case CmdType::RemoveEmptyLine:{
+        RemoveEmptyLineCmd* cmd = (RemoveEmptyLineCmd*)(head);
         pieceTable->remove(cmd->pieceIndex);
         gapBuffer->remove(cmd->lineNo);
-        InsertLineBreakCmd newCmd;
+        InsertEmptyLineCmd newCmd;
         newCmd.lineNo = cmd->lineNo;
         newCmd.pieceIndex = cmd->pieceIndex;
         target.addCmd(&newCmd);
